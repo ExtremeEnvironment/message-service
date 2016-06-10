@@ -2,7 +2,7 @@ package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.extremeenvironment.messageservice.domain.Message;
-import de.extremeenvironment.messageservice.service.MessageService;
+import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -28,7 +29,7 @@ public class MessageResource {
     private final Logger log = LoggerFactory.getLogger(MessageResource.class);
         
     @Inject
-    private MessageService messageService;
+    private MessageRepository messageRepository;
     
     /**
      * POST  /messages : Create a new message.
@@ -41,12 +42,12 @@ public class MessageResource {
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> createMessage(@RequestBody Message message) throws URISyntaxException {
+    public ResponseEntity<Message> createMessage(@Valid @RequestBody Message message) throws URISyntaxException {
         log.debug("REST request to save Message : {}", message);
         if (message.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "idexists", "A new message cannot already have an ID")).body(null);
         }
-        Message result = messageService.save(message);
+        Message result = messageRepository.save(message);
         return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))
             .body(result);
@@ -65,12 +66,12 @@ public class MessageResource {
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> updateMessage(@RequestBody Message message) throws URISyntaxException {
+    public ResponseEntity<Message> updateMessage(@Valid @RequestBody Message message) throws URISyntaxException {
         log.debug("REST request to update Message : {}", message);
         if (message.getId() == null) {
             return createMessage(message);
         }
-        Message result = messageService.save(message);
+        Message result = messageRepository.save(message);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert("message", message.getId().toString()))
             .body(result);
@@ -87,7 +88,8 @@ public class MessageResource {
     @Timed
     public List<Message> getAllMessages() {
         log.debug("REST request to get all Messages");
-        return messageService.findAll();
+        List<Message> messages = messageRepository.findAll();
+        return messages;
     }
 
     /**
@@ -102,7 +104,7 @@ public class MessageResource {
     @Timed
     public ResponseEntity<Message> getMessage(@PathVariable Long id) {
         log.debug("REST request to get Message : {}", id);
-        Message message = messageService.findOne(id);
+        Message message = messageRepository.findOne(id);
         return Optional.ofNullable(message)
             .map(result -> new ResponseEntity<>(
                 result,
@@ -122,7 +124,7 @@ public class MessageResource {
     @Timed
     public ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
         log.debug("REST request to delete Message : {}", id);
-        messageService.delete(id);
+        messageRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("message", id.toString())).build();
     }
 

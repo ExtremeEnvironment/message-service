@@ -3,7 +3,6 @@ package de.extremeenvironment.messageservice.web.rest;
 import de.extremeenvironment.messageservice.MessageServiceApp;
 import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
-import de.extremeenvironment.messageservice.service.MessageService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,14 +41,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @IntegrationTest
 public class MessageResourceIntTest {
 
-    private static final String DEFAULT_CONTENT = "AAAAA";
-    private static final String UPDATED_CONTENT = "BBBBB";
+    private static final String DEFAULT_MESSAGE_TEXT = "AAAAA";
+    private static final String UPDATED_MESSAGE_TEXT = "BBBBB";
 
     @Inject
     private MessageRepository messageRepository;
-
-    @Inject
-    private MessageService messageService;
 
     @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -65,7 +61,7 @@ public class MessageResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         MessageResource messageResource = new MessageResource();
-        ReflectionTestUtils.setField(messageResource, "messageService", messageService);
+        ReflectionTestUtils.setField(messageResource, "messageRepository", messageRepository);
         this.restMessageMockMvc = MockMvcBuilders.standaloneSetup(messageResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();
@@ -74,7 +70,7 @@ public class MessageResourceIntTest {
     @Before
     public void initTest() {
         message = new Message();
-        message.setContent(DEFAULT_CONTENT);
+        message.setMessageText(DEFAULT_MESSAGE_TEXT);
     }
 
     @Test
@@ -93,7 +89,25 @@ public class MessageResourceIntTest {
         List<Message> messages = messageRepository.findAll();
         assertThat(messages).hasSize(databaseSizeBeforeCreate + 1);
         Message testMessage = messages.get(messages.size() - 1);
-        assertThat(testMessage.getContent()).isEqualTo(DEFAULT_CONTENT);
+        assertThat(testMessage.getMessageText()).isEqualTo(DEFAULT_MESSAGE_TEXT);
+    }
+
+    @Test
+    @Transactional
+    public void checkMessageTextIsRequired() throws Exception {
+        int databaseSizeBeforeTest = messageRepository.findAll().size();
+        // set the field null
+        message.setMessageText(null);
+
+        // Create the Message, which fails.
+
+        restMessageMockMvc.perform(post("/api/messages")
+                .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                .content(TestUtil.convertObjectToJsonBytes(message)))
+                .andExpect(status().isBadRequest());
+
+        List<Message> messages = messageRepository.findAll();
+        assertThat(messages).hasSize(databaseSizeBeforeTest);
     }
 
     @Test
@@ -107,7 +121,7 @@ public class MessageResourceIntTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(message.getId().intValue())))
-                .andExpect(jsonPath("$.[*].content").value(hasItem(DEFAULT_CONTENT.toString())));
+                .andExpect(jsonPath("$.[*].messageText").value(hasItem(DEFAULT_MESSAGE_TEXT.toString())));
     }
 
     @Test
@@ -121,7 +135,7 @@ public class MessageResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(message.getId().intValue()))
-            .andExpect(jsonPath("$.content").value(DEFAULT_CONTENT.toString()));
+            .andExpect(jsonPath("$.messageText").value(DEFAULT_MESSAGE_TEXT.toString()));
     }
 
     @Test
@@ -136,14 +150,13 @@ public class MessageResourceIntTest {
     @Transactional
     public void updateMessage() throws Exception {
         // Initialize the database
-        messageService.save(message);
-
+        messageRepository.saveAndFlush(message);
         int databaseSizeBeforeUpdate = messageRepository.findAll().size();
 
         // Update the message
         Message updatedMessage = new Message();
         updatedMessage.setId(message.getId());
-        updatedMessage.setContent(UPDATED_CONTENT);
+        updatedMessage.setMessageText(UPDATED_MESSAGE_TEXT);
 
         restMessageMockMvc.perform(put("/api/messages")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -154,15 +167,14 @@ public class MessageResourceIntTest {
         List<Message> messages = messageRepository.findAll();
         assertThat(messages).hasSize(databaseSizeBeforeUpdate);
         Message testMessage = messages.get(messages.size() - 1);
-        assertThat(testMessage.getContent()).isEqualTo(UPDATED_CONTENT);
+        assertThat(testMessage.getMessageText()).isEqualTo(UPDATED_MESSAGE_TEXT);
     }
 
     @Test
     @Transactional
     public void deleteMessage() throws Exception {
         // Initialize the database
-        messageService.save(message);
-
+        messageRepository.saveAndFlush(message);
         int databaseSizeBeforeDelete = messageRepository.findAll().size();
 
         // Get the message

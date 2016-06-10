@@ -1,8 +1,12 @@
 package de.extremeenvironment.messageservice.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Objects;
 
 /**
@@ -18,8 +22,16 @@ public class Message implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "content")
-    private String content;
+    @NotNull
+    @Column(name = "message_text", nullable = false)
+    private String messageText;
+
+    @OneToMany(mappedBy = "message")
+    @JsonIgnore
+    private Set<UserHolder> users = new HashSet<>();
+
+    @ManyToOne
+    private Conversation conversation;
 
     public Long getId() {
         return id;
@@ -29,12 +41,28 @@ public class Message implements Serializable {
         this.id = id;
     }
 
-    public String getContent() {
-        return content;
+    public String getMessageText() {
+        return messageText;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setMessageText(String messageText) {
+        this.messageText = messageText;
+    }
+
+    public Set<UserHolder> getUsers() {
+        return users;
+    }
+
+    public void setUsers(Set<UserHolder> userHolders) {
+        this.users = userHolders;
+    }
+
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
     }
 
     @Override
@@ -61,7 +89,7 @@ public class Message implements Serializable {
     public String toString() {
         return "Message{" +
             "id=" + id +
-            ", content='" + content + "'" +
+            ", messageText='" + messageText + "'" +
             '}';
     }
 }

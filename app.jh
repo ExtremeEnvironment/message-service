@@ -1,9 +1,25 @@
+
 entity Message {
-
-    content String,
-
-
-
+	messageText String required
 }
 
-service Message with serviceClass
+entity Conversation {
+	active Boolean required,
+    title String //brauchen wir das?
+}
+
+entity UserHolder {
+	userId Long required
+}
+
+relationship ManyToMany {
+	UserHolder{conversation} to Conversation{user}
+}
+
+relationship OneToMany {
+	Conversation{message} to Message{conversation}
+}
+
+relationship OneToMany {
+	Message{user} to UserHolder
+}

@@ -1,14 +1,32 @@
 {
-  "relationships": [],
+  "relationships": [
+    {
+      "relationshipId": 1,
+      "relationshipName": "user",
+      "otherEntityName": "userHolder",
+      "relationshipType": "one-to-many",
+      "otherEntityRelationshipName": "message"
+    },
+    {
+      "relationshipId": 2,
+      "relationshipName": "conversation",
+      "otherEntityName": "conversation",
+      "relationshipType": "many-to-one",
+      "otherEntityField": "id"
+    }
+  ],
   "fields": [
     {
       "fieldId": 1,
-      "fieldName": "content",
-      "fieldType": "String"
+      "fieldName": "messageText",
+      "fieldType": "String",
+      "fieldValidateRules": [
+        "required"
+      ]
     }
   ],
   "changelogDate": "20160530071216",
   "dto": "no",
   "pagination": "no",
-  "service": "serviceClass"
+  "service": "no"
 }
