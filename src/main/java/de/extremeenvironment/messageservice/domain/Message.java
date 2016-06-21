@@ -1,12 +1,9 @@
 package de.extremeenvironment.messageservice.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.Objects;
 
 /**
@@ -26,9 +23,8 @@ public class Message implements Serializable {
     @Column(name = "message_text", nullable = false)
     private String messageText;
 
-    @OneToMany(mappedBy = "message")
-    @JsonIgnore
-    private Set<UserHolder> users = new HashSet<>();
+    @ManyToOne
+    private UserHolder user;
 
     @ManyToOne
     private Conversation conversation;
@@ -49,12 +45,12 @@ public class Message implements Serializable {
         this.messageText = messageText;
     }
 
-    public Set<UserHolder> getUsers() {
-        return users;
+    public UserHolder getUser() {
+        return user;
     }
 
-    public void setUsers(Set<UserHolder> userHolders) {
-        this.users = userHolders;
+    public void setUser(UserHolder userHolder) {
+        this.user = userHolder;
     }
 
     public Conversation getConversation() {

@@ -1,5 +1,6 @@
 package de.extremeenvironment.messageservice.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
@@ -10,7 +11,6 @@ import java.util.Objects;
 
 /**
  * A UserHolder.
- * test2
  */
 @Entity
 @Table(name = "user_holder")
@@ -26,8 +26,9 @@ public class UserHolder implements Serializable {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @ManyToOne
-    private Message message;
+    @OneToMany(mappedBy = "user")
+    @JsonIgnore
+    private Set<Message> messages = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "user_holder_conversation",
@@ -51,12 +52,12 @@ public class UserHolder implements Serializable {
         this.userId = userId;
     }
 
-    public Message getMessage() {
-        return message;
+    public Set<Message> getMessages() {
+        return messages;
     }
 
-    public void setMessage(Message message) {
-        this.message = message;
+    public void setMessages(Set<Message> messages) {
+        this.messages = messages;
     }
 
     public Set<Conversation> getConversations() {

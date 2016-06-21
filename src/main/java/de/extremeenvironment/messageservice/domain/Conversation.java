@@ -11,7 +11,6 @@ import java.util.Objects;
 
 /**
  * A Conversation.
- * test
  */
 @Entity
 @Table(name = "conversation")
@@ -29,7 +28,6 @@ public class Conversation implements Serializable {
 
     @Column(name = "title")
     private String title;
-
 
     @OneToMany(mappedBy = "conversation")
     @JsonIgnore

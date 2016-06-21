@@ -2,10 +2,10 @@
   "relationships": [
     {
       "relationshipId": 1,
-      "relationshipName": "user",
+      "relationshipName": "message",
       "otherEntityName": "userHolder",
-      "relationshipType": "one-to-many",
-      "otherEntityRelationshipName": "message"
+      "relationshipType": "many-to-one",
+        "otherEntityField": "id"
     },
     {
       "relationshipId": 2,

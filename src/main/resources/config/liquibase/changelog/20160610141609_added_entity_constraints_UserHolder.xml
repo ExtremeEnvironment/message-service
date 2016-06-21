@@ -8,12 +8,6 @@
     -->
     <changeSet id="20160610141609-2" author="jhipster">
         
-        <addForeignKeyConstraint baseColumnNames="message_id"
-                                 baseTableName="user_holder"
-                                 constraintName="fk_userholder_message_id"
-                                 referencedColumnNames="id"
-                                 referencedTableName="message"/>
-
         <addForeignKeyConstraint baseColumnNames="user_holders_id"
                                  baseTableName="user_holder_conversation"
                                  constraintName="fk_user_holder_conversation_conversation_id"

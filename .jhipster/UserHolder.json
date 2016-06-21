@@ -4,8 +4,8 @@
       "relationshipId": 1,
       "relationshipName": "message",
       "otherEntityName": "message",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "id"
+      "relationshipType": "one-to-many",
+      "otherEntityRelationshipName": "message"
     },
     {
       "relationshipId": 2,
