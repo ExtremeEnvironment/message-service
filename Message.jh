@@ -1,0 +1,34 @@
+/*
+* id, "created at" und "updated at" sind bereits Spalten jeder entität
+* es ist ein einfacher Textchat, daher gibt es nur eine Textnachricht
+*/
+entity Message {
+	messageText String required
+}
+
+/*
+* Eine Konversation kann aktiv sein, und sammelt Benutzer und Nachrichten
+*/
+entity Conversation {
+	active Boolean required,
+    title String //brauchen wir das?
+}
+
+/*
+* Stellvertretung des Users
+*
+entity UserHolder {
+	userId Long required
+}
+
+relationship ManyToMany {
+	UserHolder{conversation} to Conversation{user}
+}
+
+relationship OneToMany {
+	Conversation{message} to Message{conversation}
+}
+
+relationship OneToMany {
+	Message{user} to UserHolder
+}
