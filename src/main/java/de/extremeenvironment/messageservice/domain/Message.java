@@ -29,6 +29,13 @@ public class Message implements Serializable {
     @ManyToOne
     private Conversation conversation;
 
+    public Message() {
+    }
+
+    public Message(String messageText) {
+        this.messageText = messageText;
+    }
+
     public Long getId() {
         return id;
     }

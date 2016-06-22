@@ -2,8 +2,10 @@ package de.extremeenvironment.messageservice.web.rest;
 
 import de.extremeenvironment.messageservice.MessageServiceApp;
 import de.extremeenvironment.messageservice.domain.Conversation;
+import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 
+import de.extremeenvironment.messageservice.repository.MessageRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -60,10 +62,13 @@ public class ConversationResourceIntTest {
 
     private Conversation conversation;
 
+    @Inject
+    private MessageRepository messageRepository;
+
     @PostConstruct
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        ConversationResource conversationResource = new ConversationResource();
+        ConversationResource conversationResource = new ConversationResource(conversationRepository, messageRepository);
         ReflectionTestUtils.setField(conversationResource, "conversationRepository", conversationRepository);
         this.restConversationMockMvc = MockMvcBuilders.standaloneSetup(conversationResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
@@ -75,6 +80,10 @@ public class ConversationResourceIntTest {
         conversation = new Conversation();
         conversation.setActive(DEFAULT_ACTIVE);
         conversation.setTitle(DEFAULT_TITLE);
+        conversation.addMessage(new Message("Hi"));
+        conversation.addMessage(new Message("Goodbye"));
+
+
     }
 
     @Test
@@ -97,28 +106,12 @@ public class ConversationResourceIntTest {
         assertThat(testConversation.getTitle()).isEqualTo(DEFAULT_TITLE);
     }
 
-    @Test
-    @Transactional
-    public void checkActiveIsRequired() throws Exception {
-        int databaseSizeBeforeTest = conversationRepository.findAll().size();
-        // set the field null
-        conversation.setActive(null);
-
-        // Create the Conversation, which fails.
-
-        restConversationMockMvc.perform(post("/api/conversations")
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(conversation)))
-                .andExpect(status().isBadRequest());
-
-        List<Conversation> conversations = conversationRepository.findAll();
-        assertThat(conversations).hasSize(databaseSizeBeforeTest);
-    }
 
     @Test
     @Transactional
     public void getAllConversations() throws Exception {
         // Initialize the database
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
 
         // Get all the conversations
@@ -134,6 +127,7 @@ public class ConversationResourceIntTest {
     @Transactional
     public void getConversation() throws Exception {
         // Initialize the database
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
 
         // Get the conversation
@@ -157,6 +151,7 @@ public class ConversationResourceIntTest {
     @Transactional
     public void updateConversation() throws Exception {
         // Initialize the database
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
         int databaseSizeBeforeUpdate = conversationRepository.findAll().size();
 
@@ -183,6 +178,7 @@ public class ConversationResourceIntTest {
     @Transactional
     public void deleteConversation() throws Exception {
         // Initialize the database
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
         int databaseSizeBeforeDelete = conversationRepository.findAll().size();
 
@@ -195,4 +191,5 @@ public class ConversationResourceIntTest {
         List<Conversation> conversations = conversationRepository.findAll();
         assertThat(conversations).hasSize(databaseSizeBeforeDelete - 1);
     }
+
 }

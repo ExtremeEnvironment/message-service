@@ -24,12 +24,12 @@ public class Conversation implements Serializable {
 
     @NotNull
     @Column(name = "active", nullable = false)
-    private Boolean active;
+    private Boolean active = true;
 
     @Column(name = "title")
     private String title;
 
-    @OneToMany(mappedBy = "conversation")
+    @OneToMany(mappedBy = "conversation", orphanRemoval = true)
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
 
@@ -75,6 +75,11 @@ public class Conversation implements Serializable {
 
     public void setUsers(Set<UserHolder> userHolders) {
         this.users = userHolders;
+    }
+
+    public void addMessage(Message message) {
+        message.setConversation(this);
+        messages.add(message);
     }
 
     @Override

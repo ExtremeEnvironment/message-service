@@ -2,7 +2,10 @@ package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.extremeenvironment.messageservice.domain.Conversation;
+import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
+import de.extremeenvironment.messageservice.repository.MessageRepository;
+import de.extremeenvironment.messageservice.web.rest.dto.ConversationDto;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,10 +30,17 @@ import java.util.Optional;
 public class ConversationResource {
 
     private final Logger log = LoggerFactory.getLogger(ConversationResource.class);
-        
-    @Inject
+
     private ConversationRepository conversationRepository;
-    
+
+    private MessageRepository messageRepository;
+
+    @Inject
+    public ConversationResource(ConversationRepository conversationRepository, MessageRepository messageRepository) {
+        this.conversationRepository = conversationRepository;
+        this.messageRepository = messageRepository;
+    }
+
     /**
      * POST  /conversations : Create a new conversation.
      *
@@ -42,12 +52,12 @@ public class ConversationResource {
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Conversation> createConversation(@Valid @RequestBody Conversation conversation) throws URISyntaxException {
+    public ResponseEntity<Conversation> createConversation(@Valid @RequestBody ConversationDto conversation) throws URISyntaxException {
         log.debug("REST request to save Conversation : {}", conversation);
         if (conversation.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("conversation", "idexists", "A new conversation cannot already have an ID")).body(null);
         }
-        Conversation result = conversationRepository.save(conversation);
+        Conversation result = conversationRepository.save(conversation.toConversation());
         return ResponseEntity.created(new URI("/api/conversations/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("conversation", result.getId().toString()))
             .body(result);
@@ -69,7 +79,7 @@ public class ConversationResource {
     public ResponseEntity<Conversation> updateConversation(@Valid @RequestBody Conversation conversation) throws URISyntaxException {
         log.debug("REST request to update Conversation : {}", conversation);
         if (conversation.getId() == null) {
-            return createConversation(conversation);
+            return createConversation(new ConversationDto(conversation));
         }
         Conversation result = conversationRepository.save(conversation);
         return ResponseEntity.ok()
@@ -127,5 +137,7 @@ public class ConversationResource {
         conversationRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("conversation", id.toString())).build();
     }
+
+
 
 }

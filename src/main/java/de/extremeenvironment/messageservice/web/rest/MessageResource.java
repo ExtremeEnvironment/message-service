@@ -1,7 +1,9 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
+import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -16,6 +18,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +30,17 @@ import java.util.Optional;
 public class MessageResource {
 
     private final Logger log = LoggerFactory.getLogger(MessageResource.class);
-        
-    @Inject
+
     private MessageRepository messageRepository;
-    
+
+    private ConversationRepository conversationRepository;
+
+    @Inject
+    public MessageResource(MessageRepository messageRepository, ConversationRepository conversationRepository) {
+        this.messageRepository = messageRepository;
+        this.conversationRepository = conversationRepository;
+    }
+
     /**
      * POST  /messages : Create a new message.
      *
@@ -38,15 +48,21 @@ public class MessageResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new message, or with status 400 (Bad Request) if the message has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/messages",
+    @RequestMapping(value = "/conversations/{conversationId}/messages",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> createMessage(@Valid @RequestBody Message message) throws URISyntaxException {
+    public ResponseEntity<Message> createMessage(@Valid @RequestBody Message message, @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
         log.debug("REST request to save Message : {}", message);
         if (message.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "idexists", "A new message cannot already have an ID")).body(null);
         }
+        Conversation conversation = conversationRepository.findOne(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(null);
+        }
+        conversation.addMessage(message);
+        //conversationRepository.save(conversation);
         Message result = messageRepository.save(message);
         return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))
@@ -62,14 +78,18 @@ public class MessageResource {
      * or with status 500 (Internal Server Error) if the message couldnt be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/messages",
+    @RequestMapping(value = "/conversations/{conversationId}/messages",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> updateMessage(@Valid @RequestBody Message message) throws URISyntaxException {
+    public ResponseEntity<Message> updateMessage(@Valid @RequestBody Message message, @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
         log.debug("REST request to update Message : {}", message);
+        Conversation conversation = conversationRepository.findOne(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(null);
+        }
         if (message.getId() == null) {
-            return createMessage(message);
+            return createMessage(message,conversationId);
         }
         Message result = messageRepository.save(message);
         return ResponseEntity.ok()
@@ -82,14 +102,19 @@ public class MessageResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of messages in body
      */
-    @RequestMapping(value = "/messages",
+    @RequestMapping(value = "/conversations/{conversationId}/messages",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public List<Message> getAllMessages() {
+    public List<Message> getAllMessages(@PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to get all Messages");
-        List<Message> messages = messageRepository.findAll();
-        return messages;
+
+        Conversation conversation = conversationRepository.findOne(conversationId);
+        /*if (conversation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(new LinkedList<>());
+        }*/
+
+        return messageRepository.findAllByConversationId(conversationId);
     }
 
     /**
@@ -98,11 +123,11 @@ public class MessageResource {
      * @param id the id of the message to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the message, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/messages/{id}",
+    @RequestMapping(value = "/conversations/{conversationId}/messages/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> getMessage(@PathVariable Long id) {
+    public ResponseEntity<Message> getMessage(@PathVariable Long id, @PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to get Message : {}", id);
         Message message = messageRepository.findOne(id);
         return Optional.ofNullable(message)
@@ -118,12 +143,17 @@ public class MessageResource {
      * @param id the id of the message to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/messages/{id}",
+    @RequestMapping(value = "/conversations/{conversationId}/messages/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteMessage(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteMessage(@PathVariable Long id, @PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to delete Message : {}", id);
+        Conversation conversation = conversationRepository.findOne(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(null);
+        }
+
         messageRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("message", id.toString())).build();
     }

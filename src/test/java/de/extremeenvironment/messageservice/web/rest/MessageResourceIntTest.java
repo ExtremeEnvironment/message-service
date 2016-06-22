@@ -1,7 +1,9 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import de.extremeenvironment.messageservice.MessageServiceApp;
+import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
+import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
 
 import org.junit.Before;
@@ -48,20 +50,27 @@ public class MessageResourceIntTest {
     private MessageRepository messageRepository;
 
     @Inject
+    ConversationResource conversationResource;
+
+    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
     private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
 
+    @Inject
+    private ConversationRepository conversationRepository;
+
     private MockMvc restMessageMockMvc;
 
     private Message message;
+    private Conversation conversation;
 
     @PostConstruct
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        MessageResource messageResource = new MessageResource();
-        ReflectionTestUtils.setField(messageResource, "messageRepository", messageRepository);
+        MessageResource messageResource = new MessageResource(messageRepository, conversationRepository);
+
         this.restMessageMockMvc = MockMvcBuilders.standaloneSetup(messageResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();
@@ -69,8 +78,14 @@ public class MessageResourceIntTest {
 
     @Before
     public void initTest() {
+        conversation = new Conversation();
+        conversation.addMessage(new Message("default message"));
+
         message = new Message();
         message.setMessageText(DEFAULT_MESSAGE_TEXT);
+
+        conversationRepository.save(conversation);
+
     }
 
     @Test
@@ -80,7 +95,8 @@ public class MessageResourceIntTest {
 
         // Create the Message
 
-        restMessageMockMvc.perform(post("/api/messages")
+
+        restMessageMockMvc.perform(post("/api/conversations/{conversationId}/messages", conversation.getId())
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(message)))
                 .andExpect(status().isCreated());
@@ -101,7 +117,7 @@ public class MessageResourceIntTest {
 
         // Create the Message, which fails.
 
-        restMessageMockMvc.perform(post("/api/messages")
+        restMessageMockMvc.perform(post("/api/conversations/{conversationId}/messages", conversation.getId())
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(message)))
                 .andExpect(status().isBadRequest());
@@ -114,10 +130,12 @@ public class MessageResourceIntTest {
     @Transactional
     public void getAllMessages() throws Exception {
         // Initialize the database
+        conversation.addMessage(message);
+        //conversationRepository.save(conversation);
         messageRepository.saveAndFlush(message);
 
         // Get all the messages
-        restMessageMockMvc.perform(get("/api/messages?sort=id,desc"))
+        restMessageMockMvc.perform(get("/api/conversations/{conversationId}/messages?sort=id,desc", conversation.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(message.getId().intValue())))
@@ -128,10 +146,12 @@ public class MessageResourceIntTest {
     @Transactional
     public void getMessage() throws Exception {
         // Initialize the database
+        conversation.addMessage(message);
         messageRepository.saveAndFlush(message);
 
         // Get the message
-        restMessageMockMvc.perform(get("/api/messages/{id}", message.getId()))
+        restMessageMockMvc.perform(get("/api/conversations/{conversationId}/messages/{id}",
+            conversation.getId(), message.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(message.getId().intValue()))
@@ -142,7 +162,7 @@ public class MessageResourceIntTest {
     @Transactional
     public void getNonExistingMessage() throws Exception {
         // Get the message
-        restMessageMockMvc.perform(get("/api/messages/{id}", Long.MAX_VALUE))
+        restMessageMockMvc.perform(get("/api/conversations/{conversationId}/messages/{id}", Long.MAX_VALUE, Long.MAX_VALUE))
                 .andExpect(status().isNotFound());
     }
 
@@ -150,6 +170,7 @@ public class MessageResourceIntTest {
     @Transactional
     public void updateMessage() throws Exception {
         // Initialize the database
+        conversation.addMessage(message);
         messageRepository.saveAndFlush(message);
         int databaseSizeBeforeUpdate = messageRepository.findAll().size();
 
@@ -158,7 +179,7 @@ public class MessageResourceIntTest {
         updatedMessage.setId(message.getId());
         updatedMessage.setMessageText(UPDATED_MESSAGE_TEXT);
 
-        restMessageMockMvc.perform(put("/api/messages")
+        restMessageMockMvc.perform(put("/api/conversations/{conversationId}/messages", conversation.getId())
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(updatedMessage)))
                 .andExpect(status().isOk());
@@ -174,11 +195,12 @@ public class MessageResourceIntTest {
     @Transactional
     public void deleteMessage() throws Exception {
         // Initialize the database
+        conversation.addMessage(message);
         messageRepository.saveAndFlush(message);
         int databaseSizeBeforeDelete = messageRepository.findAll().size();
 
         // Get the message
-        restMessageMockMvc.perform(delete("/api/messages/{id}", message.getId())
+        restMessageMockMvc.perform(delete("/api/conversations/{conversationId}/messages/{id}", conversation.getId(), message.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
 
