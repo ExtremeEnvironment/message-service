@@ -1,7 +1,9 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.UserHolder;
+import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.UserHolderRepository;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -27,10 +29,17 @@ import java.util.Optional;
 public class UserHolderResource {
 
     private final Logger log = LoggerFactory.getLogger(UserHolderResource.class);
-        
-    @Inject
+
     private UserHolderRepository userHolderRepository;
-    
+
+    private ConversationRepository conversationRepository;
+
+    @Inject
+    public UserHolderResource(UserHolderRepository userHolderRepository, ConversationRepository conversationRepository) {
+        this.userHolderRepository = userHolderRepository;
+        this.conversationRepository = conversationRepository;
+    }
+
     /**
      * POST  /user-holders : Create a new userHolder.
      *
@@ -38,17 +47,23 @@ public class UserHolderResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new userHolder, or with status 400 (Bad Request) if the userHolder has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/user-holders",
+    @RequestMapping(value = "/conversations/{conversationId}/members",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<UserHolder> createUserHolder(@Valid @RequestBody UserHolder userHolder) throws URISyntaxException {
+    public ResponseEntity<UserHolder> createUserHolder(@Valid @RequestBody UserHolder userHolder,
+           @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
         log.debug("REST request to save UserHolder : {}", userHolder);
         if (userHolder.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("userHolder", "idexists", "A new userHolder cannot already have an ID")).body(null);
         }
+        Conversation conversation = conversationRepository.findOne(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("userHolder", "noconversation", "conversation not found")).body(null);
+        }
         UserHolder result = userHolderRepository.save(userHolder);
-        return ResponseEntity.created(new URI("/api/user-holders/" + result.getId()))
+        String resourceUri = String.format("/api/conversations/%d/members/%d", conversationId, result.getId());
+        return ResponseEntity.created(new URI(resourceUri))
             .headers(HeaderUtil.createEntityCreationAlert("userHolder", result.getId().toString()))
             .body(result);
     }
@@ -62,14 +77,20 @@ public class UserHolderResource {
      * or with status 500 (Internal Server Error) if the userHolder couldnt be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/user-holders",
+    @RequestMapping(value = "/conversations/{conversationId}/members",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<UserHolder> updateUserHolder(@Valid @RequestBody UserHolder userHolder) throws URISyntaxException {
+    public ResponseEntity<UserHolder> updateUserHolder(@Valid @RequestBody UserHolder userHolder,
+               @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
         log.debug("REST request to update UserHolder : {}", userHolder);
+
+        Conversation conversation = conversationRepository.findOne(conversationId);
+        if (conversation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("userHolder", "noconversation", "conversation not found")).body(null);
+        }
         if (userHolder.getId() == null) {
-            return createUserHolder(userHolder);
+            return createUserHolder(userHolder, conversationId);
         }
         UserHolder result = userHolderRepository.save(userHolder);
         return ResponseEntity.ok()
@@ -82,14 +103,13 @@ public class UserHolderResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of userHolders in body
      */
-    @RequestMapping(value = "/user-holders",
+    @RequestMapping(value = "/conversations/{conversationId}/members",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public List<UserHolder> getAllUserHolders() {
+    public List<UserHolder> getAllUserHolders(@PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to get all UserHolders");
-        List<UserHolder> userHolders = userHolderRepository.findAllWithEagerRelationships();
-        return userHolders;
+        return userHolderRepository.findAllByConversationId(conversationId);
     }
 
     /**
@@ -98,14 +118,20 @@ public class UserHolderResource {
      * @param id the id of the userHolder to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the userHolder, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/user-holders/{id}",
+    @RequestMapping(value = "/conversations/{conversationId}/members/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<UserHolder> getUserHolder(@PathVariable Long id) {
+    public ResponseEntity<UserHolder> getUserHolder(@PathVariable Long id,
+            @PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to get UserHolder : {}", id);
-        UserHolder userHolder = userHolderRepository.findOneWithEagerRelationships(id);
-        return Optional.ofNullable(userHolder)
+        List<UserHolder> userHolders = userHolderRepository.findAllByConversationId(id);
+        Conversation conversation = conversationRepository.findOne(id);
+        Optional<UserHolder> userHolder = userHolders.stream()
+            .filter(user -> user.getId().equals(id))
+            .findFirst();
+
+        return userHolder
             .map(result -> new ResponseEntity<>(
                 result,
                 HttpStatus.OK))
@@ -118,11 +144,12 @@ public class UserHolderResource {
      * @param id the id of the userHolder to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/user-holders/{id}",
+    @RequestMapping(value = "/conversations/{conversationId}/members/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteUserHolder(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteUserHolder(@PathVariable Long id,
+             @PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to delete UserHolder : {}", id);
         userHolderRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("userHolder", id.toString())).build();

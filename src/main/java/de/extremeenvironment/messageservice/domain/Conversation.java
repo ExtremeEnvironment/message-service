@@ -82,6 +82,11 @@ public class Conversation implements Serializable {
         messages.add(message);
     }
 
+    public void addMember(UserHolder userHolder) {
+        userHolder.getConversations().add(this);
+        users.add(userHolder);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
