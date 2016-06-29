@@ -90,4 +90,4 @@ jhipster:
         contactEmail:
         license:
         licenseUrl:
-        enabled: false
+        enabled: true

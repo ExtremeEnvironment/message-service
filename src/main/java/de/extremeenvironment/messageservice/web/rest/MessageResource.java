@@ -1,10 +1,13 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.extremeenvironment.messageservice.client.Account;
+import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
+import de.extremeenvironment.messageservice.service.UserHolderService;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +21,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -35,10 +39,21 @@ public class MessageResource {
 
     private ConversationRepository conversationRepository;
 
+    private UserClient userClient;
+
+    private UserHolderService userHolderService;
+
     @Inject
-    public MessageResource(MessageRepository messageRepository, ConversationRepository conversationRepository) {
+    public MessageResource(
+        MessageRepository messageRepository,
+        ConversationRepository conversationRepository,
+        UserClient userClient,
+        UserHolderService userHolderService
+        ) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
+        this.userClient = userClient;
+        this.userHolderService = userHolderService;
     }
 
     /**
@@ -52,7 +67,11 @@ public class MessageResource {
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> createMessage(@Valid @RequestBody Message message, @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
+    public ResponseEntity<Message> createMessage(
+        @Valid @RequestBody Message message,
+        @PathVariable("conversationId") Long conversationId,
+        Principal currentUser
+    ) throws URISyntaxException {
         log.debug("REST request to save Message : {}", message);
         if (message.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "idexists", "A new message cannot already have an ID")).body(null);
@@ -61,6 +80,17 @@ public class MessageResource {
         if (conversation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(null);
         }
+
+
+        //fetch user
+        if (currentUser != null) {
+            Account userAccount = userClient.getAccount(currentUser.getName());
+
+            if (userAccount != null) {
+                message.setUser(userHolderService.findOrCreateByUserId(userAccount.getId()));
+            }
+        }
+
         conversation.addMessage(message);
         //conversationRepository.save(conversation);
         Message result = messageRepository.save(message);
@@ -82,14 +112,18 @@ public class MessageResource {
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Message> updateMessage(@Valid @RequestBody Message message, @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
+    public ResponseEntity<Message> updateMessage(
+        @Valid @RequestBody Message message,
+        @PathVariable("conversationId") Long conversationId,
+        Principal currentUser
+    ) throws URISyntaxException {
         log.debug("REST request to update Message : {}", message);
         Conversation conversation = conversationRepository.findOne(conversationId);
         if (conversation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(null);
         }
         if (message.getId() == null) {
-            return createMessage(message,conversationId);
+            return createMessage(message, conversationId, currentUser);
         }
         Message result = messageRepository.save(message);
         return ResponseEntity.ok()

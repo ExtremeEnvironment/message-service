@@ -75,7 +75,8 @@ jhipster:
                 tokenValidityInSeconds: 86400
         clientAuthorization:
             # change this depending on your authorization server
-            tokenUrl: http://localhost:8080/uaa/oauth/token
+            tokenUrl: http://userservice:8080/oauth/token
+            tokenServiceId: userservice
             clientId: internal
             clientSecret: internal
     mail: # specific JHipster mail property, for standard properties see MailProperties

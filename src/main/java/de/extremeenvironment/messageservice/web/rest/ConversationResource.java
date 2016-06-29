@@ -19,6 +19,7 @@ import javax.inject.Inject;
 import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -96,7 +97,7 @@ public class ConversationResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public List<Conversation> getAllConversations() {
+    public List<Conversation> getAllConversations(Principal currentUser) {
         log.debug("REST request to get all Conversations");
         List<Conversation> conversations = conversationRepository.findAll();
         return conversations;

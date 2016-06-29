@@ -12,8 +12,8 @@ import java.net.URISyntaxException;
 
 
 @Component
-public class LoadBalancedResourceDetails extends ClientCredentialsResourceDetails {
-    
+public class    LoadBalancedResourceDetails extends ClientCredentialsResourceDetails {
+
     Logger log = LoggerFactory.getLogger(this.getClass());
 
     @Autowired

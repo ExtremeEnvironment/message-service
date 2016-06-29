@@ -36,6 +36,13 @@ public class UserHolder implements Serializable {
                inverseJoinColumns = @JoinColumn(name="conversations_id", referencedColumnName="ID"))
     private Set<Conversation> conversations = new HashSet<>();
 
+    public UserHolder() {
+    }
+
+    public UserHolder(Long userId) {
+        this.userId = userId;
+    }
+
     public Long getId() {
         return id;
     }

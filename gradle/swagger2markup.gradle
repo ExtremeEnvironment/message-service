@@ -1,0 +1,35 @@
+apply plugin: 'org.asciidoctor.convert'
+apply plugin: 'io.github.robwin.swagger2markup'
+
+ext {
+    asciiDocOutputDir = file("${buildDir}/asciidoc")
+    swaggerOutputDir = file("${buildDir}/swagger")
+}
+
+convertSwagger2markup {
+    dependsOn test
+    inputDir swaggerOutputDir
+    pathsGroupedBy 'TAGS'
+}
+
+asciidoctorj {
+    version = '1.5.4'
+}
+
+asciidoctor {
+    dependsOn convertSwagger2markup
+    sources {
+        include 'index.adoc'
+    }
+    backends = ['html5', 'pdf']
+    attributes = [
+        doctype: 'book',
+        toc: 'left',
+        toclevels: '3',
+        numbered: '',
+        sectlinks: '',
+        sectanchors: '',
+        hardbreaks: '',
+        generated: asciiDocOutputDir
+    ]
+}

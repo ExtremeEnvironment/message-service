@@ -29,7 +29,7 @@ public class Conversation implements Serializable {
     @Column(name = "title")
     private String title;
 
-    @OneToMany(mappedBy = "conversation", orphanRemoval = true)
+    @OneToMany(mappedBy = "conversation", orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
 
