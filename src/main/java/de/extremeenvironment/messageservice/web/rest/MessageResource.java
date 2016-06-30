@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -49,7 +50,8 @@ public class MessageResource {
         ConversationRepository conversationRepository,
         UserClient userClient,
         UserHolderService userHolderService
-        ) {
+    ) {
+
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.userClient = userClient;
@@ -67,6 +69,7 @@ public class MessageResource {
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
+    @Transactional
     public ResponseEntity<Message> createMessage(
         @Valid @RequestBody Message message,
         @PathVariable("conversationId") Long conversationId,
@@ -91,8 +94,8 @@ public class MessageResource {
             }
         }
 
-        conversation.addMessage(message);
-        //conversationRepository.save(conversation);
+        //conversation.addMessage(message);
+        conversationRepository.save(conversation);
         Message result = messageRepository.save(message);
         return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))

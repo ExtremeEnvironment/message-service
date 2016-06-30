@@ -24,7 +24,7 @@ public class Message implements Serializable {
     private String messageText;
 
     @ManyToOne
-    private UserHolder user = new UserHolder();
+    private UserHolder user;
 
     @ManyToOne
     private Conversation conversation;

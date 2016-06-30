@@ -24,6 +24,19 @@ public class Account {
 
     private Set<String> authorities;
 
+    public Account() {
+    }
+
+    public Account(long id, String login, String firstName, String lastName, String email, boolean activated, String langKey) {
+        this.id = id;
+        this.login = login;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.email = email;
+        this.activated = activated;
+        this.langKey = langKey;
+    }
+
     public String getLogin() {
         return login;
     }
