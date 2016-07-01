@@ -7,6 +7,7 @@ import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
+import de.extremeenvironment.messageservice.repository.UserHolderRepository;
 import de.extremeenvironment.messageservice.service.UserHolderService;
 import de.extremeenvironment.messageservice.util.TestUtil;
 import de.extremeenvironment.messageservice.util.WithMockOAuth2Authentication;
@@ -75,12 +76,16 @@ public class MessageResourceIntTest{
     private UserHolderService userHolderService;
 
     @Inject
+    private UserHolderRepository userHolderRepository;
+
+    @Inject
     private WebApplicationContext context;
 
     private MockMvc restMessageMockMvc;
 
     private Message message;
     private Conversation conversation;
+
 
 
     @PostConstruct
@@ -118,14 +123,17 @@ public class MessageResourceIntTest{
         message = new Message();
         message.setMessageText(DEFAULT_MESSAGE_TEXT);
 
-        message.setUser(new UserHolder(12L, "TestUser"));
+        UserHolder user = new UserHolder(12L, "TestUser");
+        user = userHolderRepository.save(user);
+        message.setUser(user);
+        user.getMessages().add(message);
 
         conversationRepository.save(conversation);
 
     }
 
     @Test
-    //@Transactional
+    @Transactional
     @WithMockOAuth2Authentication
     public void createMessage() throws Exception {
         int databaseSizeBeforeCreate = messageRepository.findAll().size();

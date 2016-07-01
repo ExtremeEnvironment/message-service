@@ -45,7 +45,9 @@ public class UserHolderResourceIntTest {
 
 
     private static final Long DEFAULT_USER_ID = 1L;
+    private static final String DEFAULT_USER_NAME= "Alpha";
     private static final Long UPDATED_USER_ID = 2L;
+    private static final String UPDATED_USER_NAME = "Beta";
 
     @Inject
     private UserHolderRepository userHolderRepository;
@@ -81,6 +83,7 @@ public class UserHolderResourceIntTest {
 
         userHolder = new UserHolder();
         userHolder.setUserId(DEFAULT_USER_ID);
+        userHolder.setUsername(DEFAULT_USER_NAME);
 
         conversation.addMember(userHolder);
     }
@@ -176,6 +179,7 @@ public class UserHolderResourceIntTest {
         UserHolder updatedUserHolder = new UserHolder();
         updatedUserHolder.setId(userHolder.getId());
         updatedUserHolder.setUserId(UPDATED_USER_ID);
+        updatedUserHolder.setUsername(UPDATED_USER_NAME);
 
         restUserHolderMockMvc.perform(put("/api/conversations/{conversationId}/members/", conversation.getId())
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -187,6 +191,7 @@ public class UserHolderResourceIntTest {
         assertThat(userHolders).hasSize(databaseSizeBeforeUpdate);
         UserHolder testUserHolder = userHolders.get(userHolders.size() - 1);
         assertThat(testUserHolder.getUserId()).isEqualTo(UPDATED_USER_ID);
+        assertThat(testUserHolder.getUsername()).isEqualTo(UPDATED_USER_NAME);
     }
 
     @Test

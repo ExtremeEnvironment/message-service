@@ -1,5 +1,6 @@
 package de.extremeenvironment.messageservice.service;
 
+import de.extremeenvironment.messageservice.client.Account;
 import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.UserHolderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,9 +20,9 @@ public class UserHolderService {
         this.userHolderRepository = userHolderRepository;
     }
 
-    public UserHolder findOrCreateByUserId(Long id) {
+    public UserHolder findOrCreateByAccount(Account source) {
         return userHolderRepository
-            .findOneByUserId(id)
-            .orElse(userHolderRepository.save(new UserHolder(id)));
+            .findOneByUserId(source.getId())
+            .orElse(userHolderRepository.save(new UserHolder(source.getId(), source.getLogin())));
     }
 }
