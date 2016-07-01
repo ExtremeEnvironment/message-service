@@ -26,10 +26,13 @@ public class UserHolder implements Serializable {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
+    @NotNull
+    @Column(name = "username", nullable = false)
+    private String username;
+
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
-
     @ManyToMany
     @JoinTable(name = "user_holder_conversation",
                joinColumns = @JoinColumn(name="user_holders_id", referencedColumnName="ID"),
@@ -41,6 +44,11 @@ public class UserHolder implements Serializable {
 
     public UserHolder(Long userId) {
         this.userId = userId;
+    }
+
+    public UserHolder(Long userId, String username) {
+        this.userId = userId;
+        this.username = username;
     }
 
     public Long getId() {
@@ -101,5 +109,13 @@ public class UserHolder implements Serializable {
             "id=" + id +
             ", userId='" + userId + "'" +
             '}';
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

@@ -8,6 +8,7 @@ import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.service.UserHolderService;
+import de.extremeenvironment.messageservice.web.rest.dto.MessageDTO;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing Message.
@@ -147,7 +149,7 @@ public class MessageResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public List<Message> getAllMessages(@PathVariable("conversationId") Long conversationId) {
+    public List<MessageDTO> getAllMessages(@PathVariable("conversationId") Long conversationId) {
         log.debug("REST request to get all Messages");
 
         Conversation conversation = conversationRepository.findOne(conversationId);
@@ -155,7 +157,10 @@ public class MessageResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(new LinkedList<>());
         }*/
 
-        return messageRepository.findAllByConversationId(conversationId);
+        return messageRepository.findAllByConversationId(conversationId)
+            .stream()
+            .map(MessageDTO::new)
+            .collect(Collectors.toList());
     }
 
     /**

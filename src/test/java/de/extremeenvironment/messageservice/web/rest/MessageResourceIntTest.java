@@ -4,6 +4,7 @@ import de.extremeenvironment.messageservice.MessageServiceApp;
 import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
+import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.service.UserHolderService;
@@ -117,6 +118,8 @@ public class MessageResourceIntTest{
         message = new Message();
         message.setMessageText(DEFAULT_MESSAGE_TEXT);
 
+        message.setUser(new UserHolder(12L, "TestUser"));
+
         conversationRepository.save(conversation);
 
     }
@@ -178,7 +181,9 @@ public class MessageResourceIntTest{
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(message.getId().intValue())))
-                .andExpect(jsonPath("$.[*].messageText").value(hasItem(DEFAULT_MESSAGE_TEXT.toString())));
+                .andExpect(jsonPath("$.[*].messageText").value(hasItem(DEFAULT_MESSAGE_TEXT.toString())))
+                .andExpect(jsonPath("$.[*].messageUser").exists())
+                .andExpect(jsonPath("$.[*].messageDate").exists());
     }
 
     @Test
