@@ -7,53 +7,31 @@ import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.service.UserHolderService;
-import jdk.nashorn.internal.objects.annotations.Getter;
-import jdk.nashorn.internal.objects.annotations.Setter;
+import de.extremeenvironment.messageservice.util.TestUtil;
+import de.extremeenvironment.messageservice.util.WithMockOAuth2Authentication;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.SpringApplicationConfiguration;
-import org.springframework.boot.test.TestRestTemplate;
 import org.springframework.boot.test.WebIntegrationTest;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.security.authentication.TestingAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.oauth2.client.OAuth2ClientContext;
-import org.springframework.security.oauth2.client.test.OAuth2ContextSetup;
-import org.springframework.security.oauth2.client.test.RestTemplateHolder;
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
-import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
-import org.springframework.security.oauth2.provider.OAuth2Authentication;
-import org.springframework.security.oauth2.provider.OAuth2Request;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.context.support.WithSecurityContext;
-import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MockMvcBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestOperations;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import java.io.Serializable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -72,6 +50,7 @@ public class MessageResourceIntTest{
 
     private static final String DEFAULT_MESSAGE_TEXT = "AAAAA";
     private static final String UPDATED_MESSAGE_TEXT = "BBBBB";
+    private static final boolean USE_STANDALONE_MOCK = false;
 
     @Inject
     private MessageRepository messageRepository;
@@ -113,16 +92,20 @@ public class MessageResourceIntTest{
             userHolderService
         );
 
-        this.restMessageMockMvc = MockMvcBuilders
-            .standaloneSetup(messageResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setMessageConverters(jacksonMessageConverter)
-            .build();
+        if (USE_STANDALONE_MOCK) {
 
-/*        this.restMessageMockMvc = MockMvcBuilders
-            .webAppContextSetup(context)
-            .apply(springSecurity())
-            .build();*/
+            this.restMessageMockMvc = MockMvcBuilders
+                .standaloneSetup(messageResource)
+                .setCustomArgumentResolvers(pageableArgumentResolver)
+                .setMessageConverters(jacksonMessageConverter)
+                .build();
+        } else {
+            this.restMessageMockMvc = MockMvcBuilders
+                .webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+        }
+
     }
 
 
@@ -140,19 +123,18 @@ public class MessageResourceIntTest{
 
     @Test
     //@Transactional
-    //@WithMockUser(username = "tester")
+    @WithMockOAuth2Authentication
     public void createMessage() throws Exception {
         int databaseSizeBeforeCreate = messageRepository.findAll().size();
 
         // Create the Message
 
 
-        restMessageMockMvc.perform(post("/api/conversations/{conversationId}/messages", conversation.getId())
-                .with(authentication(getOauthTestAuthentication()) )
-                .sessionAttr("scopedTarget.oauth2ClientContext", getOauth2ClientContext())
+        restMessageMockMvc.perform(
+            post("/api/conversations/{conversationId}/messages", conversation.getId())
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(message)))
-                .andExpect(status().isCreated());
+                .content(TestUtil.convertObjectToJsonBytes(message))
+            ).andExpect(status().isCreated());
 
         // Validate the Message in the database
         List<Message> messages = messageRepository.findAll();
@@ -161,52 +143,9 @@ public class MessageResourceIntTest{
         assertThat(testMessage.getMessageText()).isEqualTo(DEFAULT_MESSAGE_TEXT);
     }
 
-    private Authentication getOauthTestAuthentication() {
-        return new OAuth2Authentication(getOauth2Request(), getAuthentication());
-    }
-
-    private Authentication getAuthentication() {
-        List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("Everything");
-
-        User userPrincipal = new User("user", "", true, true, true, true, authorities);
-
-        HashMap<String, String> details = new HashMap<>();
-        details.put("user_name", "bwatkins");
-        details.put("email", "bwatkins@test.org");
-        details.put("name", "Brian Watkins");
-
-        TestingAuthenticationToken token = new TestingAuthenticationToken(userPrincipal, null, authorities);
-        token.setAuthenticated(true);
-        token.setDetails(details);
-
-        return token;
-    }
-
-    private OAuth2ClientContext getOauth2ClientContext () {
-        OAuth2ClientContext mockClient = mock(OAuth2ClientContext.class);
-        when(mockClient.getAccessToken()).thenReturn(new DefaultOAuth2AccessToken("my-fun-token"));
-
-        return mockClient;
-    }
-
-
-    private OAuth2Request getOauth2Request() {
-        String clientId = "oauth-client-id";
-        Map<String, String> requestParameters = Collections.emptyMap();
-        boolean approved = true;
-        String redirectUrl = "http://my-redirect-url.com";
-        Set<String> responseTypes = Collections.emptySet();
-        Set<String> scopes = Collections.emptySet();
-        Set<String> resourceIds = Collections.emptySet();
-        Map<String, Serializable> extensionProperties = Collections.emptyMap();
-        List<GrantedAuthority> authorities = AuthorityUtils.createAuthorityList("Everything");
-
-        return new OAuth2Request(requestParameters, clientId, authorities,
-            approved, scopes, resourceIds, redirectUrl, responseTypes, extensionProperties);
-    }
-
     @Test
     @Transactional
+    @WithMockOAuth2Authentication
     public void checkMessageTextIsRequired() throws Exception {
         int databaseSizeBeforeTest = messageRepository.findAll().size();
         // set the field null
@@ -225,6 +164,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
+    @WithMockOAuth2Authentication
     public void getAllMessages() throws Exception {
         // Initialize the database
         conversation.addMessage(message);
@@ -243,6 +183,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
+    @WithMockOAuth2Authentication
     public void getMessage() throws Exception {
         // Initialize the database
         conversation.addMessage(message);
@@ -259,6 +200,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
+    @WithMockOAuth2Authentication
     public void getNonExistingMessage() throws Exception {
         // Get the message
         restMessageMockMvc.perform(get("/api/conversations/{conversationId}/messages/{id}", Long.MAX_VALUE, Long.MAX_VALUE))
@@ -267,6 +209,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
+    @WithMockOAuth2Authentication
     public void updateMessage() throws Exception {
         // Initialize the database
         conversation.addMessage(message);
@@ -292,6 +235,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
+    @WithMockOAuth2Authentication
     public void deleteMessage() throws Exception {
         // Initialize the database
         conversation.addMessage(message);
@@ -307,5 +251,4 @@ public class MessageResourceIntTest{
         List<Message> messages = messageRepository.findAll();
         assertThat(messages).hasSize(databaseSizeBeforeDelete - 1);
     }
-
 }

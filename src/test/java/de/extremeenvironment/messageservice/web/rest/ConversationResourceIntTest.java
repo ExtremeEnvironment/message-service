@@ -1,11 +1,13 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import de.extremeenvironment.messageservice.MessageServiceApp;
+import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 
 import de.extremeenvironment.messageservice.repository.MessageRepository;
+import de.extremeenvironment.messageservice.util.TestUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -18,7 +20,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +59,9 @@ public class ConversationResourceIntTest {
     @Inject
     private PageableHandlerMethodArgumentResolver pageableArgumentResolver;
 
+    @Inject
+    private UserClient userClient;
+
     private MockMvc restConversationMockMvc;
 
     private Conversation conversation;
@@ -68,8 +72,13 @@ public class ConversationResourceIntTest {
     @PostConstruct
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        ConversationResource conversationResource = new ConversationResource(conversationRepository, messageRepository);
-        ReflectionTestUtils.setField(conversationResource, "conversationRepository", conversationRepository);
+
+        ConversationResource conversationResource = new ConversationResource(
+            conversationRepository,
+            messageRepository,
+            userClient
+        );
+
         this.restConversationMockMvc = MockMvcBuilders.standaloneSetup(conversationResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();

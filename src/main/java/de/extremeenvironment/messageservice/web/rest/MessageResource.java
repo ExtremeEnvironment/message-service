@@ -15,6 +15,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +25,7 @@ import javax.validation.Valid;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -84,9 +87,10 @@ public class MessageResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("message", "noconversation", "conversation not found")).body(null);
         }
 
-
         //fetch user
         if (currentUser != null) {
+            log.info("saving message for user {}", currentUser.getName());
+
             Account userAccount = userClient.getAccount(currentUser.getName());
 
             if (userAccount != null) {

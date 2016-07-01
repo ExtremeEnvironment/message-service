@@ -1,6 +1,8 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.extremeenvironment.messageservice.client.Account;
+import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
@@ -35,11 +37,17 @@ public class ConversationResource {
     private ConversationRepository conversationRepository;
 
     private MessageRepository messageRepository;
+    private UserClient userClient;
 
     @Inject
-    public ConversationResource(ConversationRepository conversationRepository, MessageRepository messageRepository) {
+    public ConversationResource(
+        ConversationRepository conversationRepository,
+        MessageRepository messageRepository,
+        UserClient userClient
+    ) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
+        this.userClient = userClient;
     }
 
     /**
@@ -99,7 +107,15 @@ public class ConversationResource {
     @Timed
     public List<Conversation> getAllConversations(Principal currentUser) {
         log.debug("REST request to get all Conversations");
-        List<Conversation> conversations = conversationRepository.findAll();
+        List<Conversation> conversations;
+
+
+        if (currentUser == null) {
+            conversations = conversationRepository.findAll();
+        } else {
+            Account userAccount = userClient.getAccount(currentUser.getName());
+            conversations = conversationRepository.readConversationsByUserId(userAccount.getId());
+        }
         return conversations;
     }
 
