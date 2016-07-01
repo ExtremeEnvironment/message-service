@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <!--
+        Added the constraints for entity UserHolder.
+    -->
+    <changeSet id="20160610141609-2" author="jhipster">
+        
+        <addForeignKeyConstraint baseColumnNames="user_holders_id"
+                                 baseTableName="user_holder_conversation"
+                                 constraintName="fk_user_holder_conversation_conversation_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="user_holder"/>
+        <addForeignKeyConstraint baseColumnNames="conversations_id"
+                                 baseTableName="user_holder_conversation"
+                                 constraintName="fk_user_holder_conversation_userholder_id"
+                                 referencedColumnNames="id"
+                                 referencedTableName="conversation"/>
+        
+    </changeSet>
+</databaseChangeLog>

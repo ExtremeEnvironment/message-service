@@ -27,7 +27,6 @@ import java.util.Collection;
 @EnableAutoConfiguration(exclude = { MetricFilterAutoConfiguration.class, MetricRepositoryAutoConfiguration.class })
 @EnableConfigurationProperties({ JHipsterProperties.class, LiquibaseProperties.class })
 @EnableEurekaClient
-@EnableFeignClients
 public class MessageServiceApp {
 
     private static final Logger log = LoggerFactory.getLogger(MessageServiceApp.class);

@@ -2,6 +2,7 @@ package de.extremeenvironment.messageservice.domain;
 
 
 import javax.persistence.*;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -10,7 +11,7 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "message")
-public class Message implements Serializable {
+public class Message extends AbstractAuditingEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -18,8 +19,22 @@ public class Message implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "content")
-    private String content;
+    @NotNull
+    @Column(name = "message_text", nullable = false)
+    private String messageText;
+
+    @ManyToOne
+    private UserHolder user;
+
+    @ManyToOne
+    private Conversation conversation;
+
+    public Message() {
+    }
+
+    public Message(String messageText) {
+        this.messageText = messageText;
+    }
 
     public Long getId() {
         return id;
@@ -29,12 +44,28 @@ public class Message implements Serializable {
         this.id = id;
     }
 
-    public String getContent() {
-        return content;
+    public String getMessageText() {
+        return messageText;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setMessageText(String messageText) {
+        this.messageText = messageText;
+    }
+
+    public UserHolder getUser() {
+        return user;
+    }
+
+    public void setUser(UserHolder userHolder) {
+        this.user = userHolder;
+    }
+
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
     }
 
     @Override
@@ -61,7 +92,7 @@ public class Message implements Serializable {
     public String toString() {
         return "Message{" +
             "id=" + id +
-            ", content='" + content + "'" +
+            ", messageText='" + messageText + "'" +
             '}';
     }
 }

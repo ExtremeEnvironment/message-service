@@ -1,4 +1,4 @@
-package de.extremeenvironment.messageservice.web.rest;
+package de.extremeenvironment.messageservice.util;
 
 import de.extremeenvironment.messageservice.domain.util.JSR310DateTimeSerializer;
 import de.extremeenvironment.messageservice.domain.util.JSR310LocalDateDeserializer;

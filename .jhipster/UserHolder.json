@@ -3,29 +3,30 @@
     {
       "relationshipId": 1,
       "relationshipName": "message",
-      "otherEntityName": "userHolder",
-      "relationshipType": "many-to-one",
-        "otherEntityField": "id"
+      "otherEntityName": "message",
+      "relationshipType": "one-to-many",
+      "otherEntityRelationshipName": "message"
     },
     {
       "relationshipId": 2,
       "relationshipName": "conversation",
       "otherEntityName": "conversation",
-      "relationshipType": "many-to-one",
-      "otherEntityField": "id"
+      "relationshipType": "many-to-many",
+      "otherEntityField": "id",
+      "ownerSide": true
     }
   ],
   "fields": [
     {
       "fieldId": 1,
-      "fieldName": "messageText",
-      "fieldType": "String",
+      "fieldName": "userId",
+      "fieldType": "Long",
       "fieldValidateRules": [
         "required"
       ]
     }
   ],
-  "changelogDate": "20160530071216",
+  "changelogDate": "20160610141609",
   "dto": "no",
   "pagination": "no",
   "service": "no"

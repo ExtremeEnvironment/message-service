@@ -74,7 +74,8 @@ jhipster:
                 tokenValidityInSeconds: 86400
         clientAuthorization:
             # change this depending on your authorization server
-            tokenUrl: http://localhost:8080/uaa/oauth/token
+            tokenUrl: http://uaa:9999/oauth/token
+            tokenServiceId: uaa
             clientId: internal
             clientSecret: internal
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
@@ -89,4 +90,4 @@ jhipster:
         contactEmail:
         license:
         licenseUrl:
-        enabled: false
+        enabled: true
