@@ -27,7 +27,11 @@ public class Account {
     public Account() {
     }
 
-    public Account(long id, String login, String firstName, String lastName, String email, boolean activated, String langKey) {
+    public Account(
+            long id, String login, String firstName,
+            String lastName, String email,
+            boolean activated, String langKey
+    ) {
         this.id = id;
         this.login = login;
         this.firstName = firstName;

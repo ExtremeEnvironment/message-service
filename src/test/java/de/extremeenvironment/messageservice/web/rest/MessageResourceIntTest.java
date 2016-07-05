@@ -140,18 +140,21 @@ public class MessageResourceIntTest{
 
         // Create the Message
 
-
-        restMessageMockMvc.perform(
-            post("/api/conversations/{conversationId}/messages", conversation.getId())
-                .contentType(TestUtil.APPLICATION_JSON_UTF8)
-                .content(TestUtil.convertObjectToJsonBytes(message))
+        for(int i = 0; i < 3; i++) {
+            restMessageMockMvc.perform(
+                post("/api/conversations/{conversationId}/messages", conversation.getId())
+                    .contentType(TestUtil.APPLICATION_JSON_UTF8)
+                    .content(TestUtil.convertObjectToJsonBytes(message))
             ).andExpect(status().isCreated());
 
-        // Validate the Message in the database
-        List<Message> messages = messageRepository.findAll();
-        assertThat(messages).hasSize(databaseSizeBeforeCreate + 1);
-        Message testMessage = messages.get(messages.size() - 1);
-        assertThat(testMessage.getMessageText()).isEqualTo(DEFAULT_MESSAGE_TEXT);
+            // Validate the Message in the database
+            List<Message> messages = messageRepository.findAll();
+            assertThat(messages).hasSize(databaseSizeBeforeCreate + 1);
+            Message testMessage = messages.get(messages.size() - 1);
+            assertThat(testMessage.getMessageText()).isEqualTo(DEFAULT_MESSAGE_TEXT);
+            databaseSizeBeforeCreate++;
+        }
+
     }
 
     @Test

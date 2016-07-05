@@ -1,6 +1,8 @@
 package de.extremeenvironment.messageservice.domain;
 
 
+import de.extremeenvironment.messageservice.domain.validation.ValidateMethod;
+
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.io.Serializable;
@@ -11,6 +13,7 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "message")
+@ValidateMethod(method = "checkUserIsMemberOfConversation", message = "user must be part of conversations members")
 public class Message extends AbstractAuditingEntity implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -26,6 +29,7 @@ public class Message extends AbstractAuditingEntity implements Serializable {
     @ManyToOne
     private UserHolder user;
 
+    @NotNull
     @ManyToOne
     private Conversation conversation;
 
@@ -66,6 +70,10 @@ public class Message extends AbstractAuditingEntity implements Serializable {
 
     public void setConversation(Conversation conversation) {
         this.conversation = conversation;
+    }
+
+    public boolean checkUserIsMemberOfConversation() {
+        return user != null && conversation != null && conversation.getUsers().contains(user);
     }
 
     @Override
