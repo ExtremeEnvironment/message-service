@@ -1,24 +1,23 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import de.extremeenvironment.messageservice.MessageServiceApp;
+import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.UserHolderRepository;
-
+import de.extremeenvironment.messageservice.service.UserHolderService;
 import de.extremeenvironment.messageservice.util.TestUtil;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.hamcrest.Matchers.hasItem;
 import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.WebIntegrationTest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +27,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -39,18 +39,24 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = MessageServiceApp.class)
-@WebAppConfiguration
-@IntegrationTest
+@WebIntegrationTest({"server.port:0", "spring.profiles.active:test"})
 public class UserHolderResourceIntTest {
 
 
-    private static final Long DEFAULT_USER_ID = 1L;
+    private static final Long DEFAULT_USER_ID = 42L;
     private static final String DEFAULT_USER_NAME= "Alpha";
     private static final Long UPDATED_USER_ID = 2L;
     private static final String UPDATED_USER_NAME = "Beta";
 
     @Inject
     private UserHolderRepository userHolderRepository;
+
+    @Inject
+    private UserClient userClient;
+
+    @Inject
+    private UserHolderService userHolderService;
+
 
     @Inject
     private ConversationRepository conversationRepository;
@@ -69,7 +75,12 @@ public class UserHolderResourceIntTest {
     @PostConstruct
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        UserHolderResource userHolderResource = new UserHolderResource(userHolderRepository, conversationRepository);
+        UserHolderResource userHolderResource = new UserHolderResource(
+            userHolderRepository,
+            conversationRepository,
+            userClient,
+            userHolderService
+        );
         this.restUserHolderMockMvc = MockMvcBuilders.standaloneSetup(userHolderResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();

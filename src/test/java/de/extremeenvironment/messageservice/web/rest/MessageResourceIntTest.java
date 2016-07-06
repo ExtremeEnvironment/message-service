@@ -23,6 +23,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.security.oauth2.client.token.grant.password.ResourceOwnerPasswordResourceDetails;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
@@ -117,16 +118,15 @@ public class MessageResourceIntTest{
 
     @Before
     public void initTest() {
-        conversation = new Conversation();
-        conversation.addMessage(new Message("default message"));
-
-        message = new Message();
-        message.setMessageText(DEFAULT_MESSAGE_TEXT);
 
         UserHolder user = new UserHolder(12L, "TestUser");
         user = userHolderRepository.save(user);
-        message.setUser(user);
-        user.getMessages().add(message);
+
+        conversation = new Conversation();
+        conversation.addMember(user);
+
+        message = new Message(DEFAULT_MESSAGE_TEXT, user);
+
 
         conversationRepository.save(conversation);
 
@@ -145,7 +145,8 @@ public class MessageResourceIntTest{
                 post("/api/conversations/{conversationId}/messages", conversation.getId())
                     .contentType(TestUtil.APPLICATION_JSON_UTF8)
                     .content(TestUtil.convertObjectToJsonBytes(message))
-            ).andExpect(status().isCreated());
+            ).andDo(MockMvcResultHandlers.print())
+                .andExpect(status().isCreated());
 
             // Validate the Message in the database
             List<Message> messages = messageRepository.findAll();

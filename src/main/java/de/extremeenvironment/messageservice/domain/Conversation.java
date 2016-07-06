@@ -29,11 +29,16 @@ public class Conversation implements Serializable {
     @Column(name = "title")
     private String title;
 
-    @OneToMany(mappedBy = "conversation", orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(
+        mappedBy = "conversation",
+        orphanRemoval = true,
+        fetch = FetchType.EAGER,
+        cascade = CascadeType.REMOVE
+    )
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
 
-    @ManyToMany(mappedBy = "conversations")
+    @ManyToMany(mappedBy = "conversations", cascade = CascadeType.DETACH)
     @JsonIgnore
     private Set<UserHolder> users = new HashSet<>();
 

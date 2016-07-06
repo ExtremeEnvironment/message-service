@@ -1,10 +1,13 @@
 package de.extremeenvironment.messageservice.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.extremeenvironment.messageservice.client.Account;
+import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.UserHolderRepository;
+import de.extremeenvironment.messageservice.service.UserHolderService;
 import de.extremeenvironment.messageservice.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +37,21 @@ public class UserHolderResource {
 
     private ConversationRepository conversationRepository;
 
+    private UserClient userClient;
+
+    private UserHolderService userHolderService;
+
     @Inject
-    public UserHolderResource(UserHolderRepository userHolderRepository, ConversationRepository conversationRepository) {
+    public UserHolderResource(
+        UserHolderRepository userHolderRepository,
+        ConversationRepository conversationRepository,
+        UserClient userClient,
+        UserHolderService userHolderService
+        ) {
         this.userHolderRepository = userHolderRepository;
         this.conversationRepository = conversationRepository;
+        this.userClient = userClient;
+        this.userHolderService = userHolderService;
     }
 
     /**
@@ -51,17 +65,20 @@ public class UserHolderResource {
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<UserHolder> createUserHolder(@Valid @RequestBody UserHolder userHolder,
+    public ResponseEntity<UserHolder> createUserHolder(@Valid @RequestBody UserHolderDto userHolder,
            @PathVariable("conversationId") Long conversationId) throws URISyntaxException {
         log.debug("REST request to save UserHolder : {}", userHolder);
-        if (userHolder.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("userHolder", "idexists", "A new userHolder cannot already have an ID")).body(null);
-        }
+
         Conversation conversation = conversationRepository.findOne(conversationId);
         if (conversation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("userHolder", "noconversation", "conversation not found")).body(null);
         }
-        UserHolder result = userHolderRepository.save(userHolder);
+        Account account = userClient.getAccount(userHolder.getUserId());
+        UserHolder user = userHolderService.findOrCreateByAccount(account);
+        conversation.addMember(user);
+
+        UserHolder result = userHolderRepository.save(user);
+
         String resourceUri = String.format("/api/conversations/%d/members/%d", conversationId, result.getId());
         return ResponseEntity.created(new URI(resourceUri))
             .headers(HeaderUtil.createEntityCreationAlert("userHolder", result.getId().toString()))
@@ -90,7 +107,7 @@ public class UserHolderResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("userHolder", "noconversation", "conversation not found")).body(null);
         }
         if (userHolder.getId() == null) {
-            return createUserHolder(userHolder, conversationId);
+            return createUserHolder(new UserHolderDto(userHolder.getId()), conversationId);
         }
         UserHolder result = userHolderRepository.save(userHolder);
         return ResponseEntity.ok()

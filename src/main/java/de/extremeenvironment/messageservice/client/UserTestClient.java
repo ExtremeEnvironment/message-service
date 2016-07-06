@@ -35,4 +35,17 @@ public class UserTestClient implements UserClient {
             "de"
         );
     }
+
+    @Override
+    public Account getAccount(@PathVariable("id") Long id) {
+        return new Account(
+            42,
+            "John Doe",
+            "John",
+            "Doe",
+            "john@example.com",
+            true,
+            "de"
+        );
+    }
 }

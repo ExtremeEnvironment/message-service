@@ -4,9 +4,11 @@ import de.extremeenvironment.messageservice.MessageServiceApp;
 import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
+import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 
 import de.extremeenvironment.messageservice.repository.MessageRepository;
+import de.extremeenvironment.messageservice.repository.UserHolderRepository;
 import de.extremeenvironment.messageservice.util.TestUtil;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +56,9 @@ public class ConversationResourceIntTest {
     private ConversationRepository conversationRepository;
 
     @Inject
+    private UserHolderRepository userHolderRepository;
+
+    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -68,6 +73,7 @@ public class ConversationResourceIntTest {
 
     @Inject
     private MessageRepository messageRepository;
+    private UserHolder user;
 
     @PostConstruct
     public void setup() {
@@ -86,12 +92,15 @@ public class ConversationResourceIntTest {
 
     @Before
     public void initTest() {
+        user = new UserHolder(12L, "TestHolder");
+        user = userHolderRepository.save(user);
+
         conversation = new Conversation();
         conversation.setActive(DEFAULT_ACTIVE);
         conversation.setTitle(DEFAULT_TITLE);
-        conversation.addMessage(new Message("Hi"));
-        conversation.addMessage(new Message("Goodbye"));
-
+        conversation.addMessage(new Message("Hi", user));
+        conversation.addMessage(new Message("Goodbye", user));
+        conversation.addMember(user);
 
     }
 
@@ -120,8 +129,8 @@ public class ConversationResourceIntTest {
     @Transactional
     public void getAllConversations() throws Exception {
         // Initialize the database
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
 
         // Get all the conversations
         restConversationMockMvc.perform(get("/api/conversations?sort=id,desc"))
@@ -136,8 +145,8 @@ public class ConversationResourceIntTest {
     @Transactional
     public void getConversation() throws Exception {
         // Initialize the database
+        conversation = conversationRepository.saveAndFlush(conversation);
         conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
-        conversationRepository.saveAndFlush(conversation);
 
         // Get the conversation
         restConversationMockMvc.perform(get("/api/conversations/{id}", conversation.getId()))
@@ -160,8 +169,8 @@ public class ConversationResourceIntTest {
     @Transactional
     public void updateConversation() throws Exception {
         // Initialize the database
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         int databaseSizeBeforeUpdate = conversationRepository.findAll().size();
 
         // Update the conversation
@@ -187,8 +196,8 @@ public class ConversationResourceIntTest {
     @Transactional
     public void deleteConversation() throws Exception {
         // Initialize the database
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         conversationRepository.saveAndFlush(conversation);
+        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
         int databaseSizeBeforeDelete = conversationRepository.findAll().size();
 
         // Get the conversation
