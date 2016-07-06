@@ -119,7 +119,7 @@ public class MessageResourceIntTest{
     @Before
     public void initTest() {
 
-        UserHolder user = new UserHolder(12L, "TestUser");
+        UserHolder user = new UserHolder(42L, "TestUser");
         user = userHolderRepository.save(user);
 
         conversation = new Conversation();
