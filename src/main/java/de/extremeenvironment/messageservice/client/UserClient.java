@@ -19,4 +19,7 @@ public interface UserClient {
 
     @RequestMapping(method = RequestMethod.GET, value = "/users/{userName}")
     Account getAccount(@PathVariable("userName") String userName);
+
+    @RequestMapping(method = RequestMethod.GET, value = "/users/id:{id}")
+    Account getAccount(@PathVariable("id") Long id);
 }

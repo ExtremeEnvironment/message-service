@@ -5,6 +5,7 @@ import de.extremeenvironment.messageservice.client.Account;
 import de.extremeenvironment.messageservice.client.UserClient;
 import de.extremeenvironment.messageservice.domain.Conversation;
 import de.extremeenvironment.messageservice.domain.Message;
+import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
 import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.service.UserHolderService;
@@ -91,16 +92,27 @@ public class MessageResource {
             Account userAccount = userClient.getAccount(currentUser.getName());
 
             if (userAccount != null) {
-                message.setUser(userHolderService.findOrCreateByAccount(userAccount));
+                UserHolder user = userHolderService.findOrCreateByAccount(userAccount);
+                message.setUser(user);
             }
         }
 
         //conversation.addMessage(message);
         conversationRepository.save(conversation);
-        Message result = messageRepository.save(message);
-        return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))
-            .body(result);
+        message.setConversation(conversation);
+        try {
+
+            Message result = messageRepository.save(message);
+            return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))
+                .body(result);
+        } catch (Exception e) {
+            log.error("it failed with: {} {}", e.getClass().toString(), e.getMessage());
+            log.error("{}", e);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+
     }
 
     /**

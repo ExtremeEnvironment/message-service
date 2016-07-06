@@ -7,20 +7,23 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.security.oauth2.client.token.grant.client.ClientCredentialsResourceDetails;
 import org.springframework.stereotype.Component;
 
+import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 
 @Component
-public class    LoadBalancedResourceDetails extends ClientCredentialsResourceDetails {
+public class LoadBalancedResourceDetails extends ClientCredentialsResourceDetails {
 
-    Logger log = LoggerFactory.getLogger(this.getClass());
+    Logger log = LoggerFactory.getLogger(LoadBalancedResourceDetails.class);
 
-    @Autowired
+    private String tokenServiceId;
+
+    @Inject
     public LoadBalancedResourceDetails(JHipsterProperties jHipsterProperties) {
         this.jHipsterProperties = jHipsterProperties;
 
-        setAccessTokenUri(jHipsterProperties.getSecurity().getClientAuthorization().getTokenUrl());
+        setAccessTokenUri(jHipsterProperties.getSecurity().getClientAuthorization().getAccessTokenUri());
         setClientId(jHipsterProperties.getSecurity().getClientAuthorization().getClientId());
         setClientSecret(jHipsterProperties.getSecurity().getClientAuthorization().getClientSecret());
         setGrantType("client_credentials");
