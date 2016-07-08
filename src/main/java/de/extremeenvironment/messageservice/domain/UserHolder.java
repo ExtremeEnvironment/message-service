@@ -33,10 +33,11 @@ public class UserHolder implements Serializable {
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
+
     @ManyToMany
     @JoinTable(name = "user_holder_conversation",
-               joinColumns = @JoinColumn(name="user_holders_id", referencedColumnName="ID"),
-               inverseJoinColumns = @JoinColumn(name="conversations_id", referencedColumnName="ID"))
+        joinColumns = @JoinColumn(name = "user_holders_id", referencedColumnName = "ID"),
+        inverseJoinColumns = @JoinColumn(name = "conversations_id", referencedColumnName = "ID"))
     private Set<Conversation> conversations = new HashSet<>();
 
     public UserHolder() {
@@ -92,7 +93,7 @@ public class UserHolder implements Serializable {
             return false;
         }
         UserHolder userHolder = (UserHolder) o;
-        if(userHolder.id == null || id == null) {
+        if (userHolder.id == null || id == null) {
             return false;
         }
         return Objects.equals(id, userHolder.id);

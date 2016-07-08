@@ -36,10 +36,12 @@ public class DataService {
         userHolderRepository.saveAndFlush(userHolder2);
 
         Conversation conversation= new Conversation();
-        conversation.getUsers().add(userHolder);
-        conversation.getUsers().add(userHolder2);
+        conversation.addMember(userHolder);
+        conversation.addMember(userHolder2);
         conversation.setActive(true);
         conversation.setTitle("coole Conversation");
+
+
 
         conversationRepository.saveAndFlush(conversation);
 
