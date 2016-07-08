@@ -110,12 +110,12 @@ public class ConversationResource {
         List<Conversation> conversations;
 
 
-        if (currentUser == null) {
+
             conversations = conversationRepository.findAll();
-        } else {
+        /*
             Account userAccount = userClient.getAccount(currentUser.getName());
             conversations = conversationRepository.readConversationsByUserId(userAccount.getId());
-        }
+        */
         return conversations;
     }
 
