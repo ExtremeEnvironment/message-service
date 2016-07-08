@@ -1,8 +1,10 @@
 package de.extremeenvironment.messageservice.service;
 
 import de.extremeenvironment.messageservice.domain.Conversation;
+import de.extremeenvironment.messageservice.domain.Message;
 import de.extremeenvironment.messageservice.domain.UserHolder;
 import de.extremeenvironment.messageservice.repository.ConversationRepository;
+import de.extremeenvironment.messageservice.repository.MessageRepository;
 import de.extremeenvironment.messageservice.repository.UserHolderRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,9 @@ public class DataService {
     @Inject
     UserHolderRepository userHolderRepository;
 
+    @Inject
+    MessageRepository messageRepository;
+
     @PostConstruct
     public void createDate() {
 
@@ -40,8 +45,15 @@ public class DataService {
         conversation.addMember(userHolder2);
         conversation.setActive(true);
         conversation.setTitle("coole Conversation");
+        conversationRepository.saveAndFlush(conversation);
 
+        Message message= new Message();
+        message.setMessageText("looll");
+        message.setUser(userHolder);
 
+        messageRepository.saveAndFlush(message);
+
+        conversation.addMessage(message);
 
         conversationRepository.saveAndFlush(conversation);
 
