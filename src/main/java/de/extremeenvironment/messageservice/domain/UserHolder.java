@@ -33,7 +33,10 @@ public class UserHolder implements Serializable {
     @OneToMany(mappedBy = "user")
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
-    @ManyToMany
+
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JsonIgnore
     @JoinTable(name = "user_holder_conversation",
                joinColumns = @JoinColumn(name="user_holders_id", referencedColumnName="ID"),
                inverseJoinColumns = @JoinColumn(name="conversations_id", referencedColumnName="ID"))

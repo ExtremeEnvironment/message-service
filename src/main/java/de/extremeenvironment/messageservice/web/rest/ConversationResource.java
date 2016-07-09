@@ -15,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.provider.OAuth2Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -109,13 +110,16 @@ public class ConversationResource {
         log.debug("REST request to get all Conversations");
         List<Conversation> conversations;
 
+        OAuth2Authentication oAuth2Authentication = (OAuth2Authentication) currentUser;
 
-        if (currentUser == null) {
+
+        if (currentUser == null || oAuth2Authentication.getOAuth2Request().getClientId().equals("internal")) {
             conversations = conversationRepository.findAll();
         } else {
             Account userAccount = userClient.getAccount(currentUser.getName());
             conversations = conversationRepository.readConversationsByUserId(userAccount.getId());
         }
+
         return conversations;
     }
 

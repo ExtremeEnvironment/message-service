@@ -9,6 +9,7 @@ import feign.RequestInterceptor;
 import org.springframework.cloud.security.oauth2.client.feign.OAuth2FeignRequestInterceptor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -54,6 +55,16 @@ public class MicroserviceSecurityConfiguration extends ResourceServerConfigurerA
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
             .authorizeRequests()
+            .antMatchers(HttpMethod.POST, "/api/conversations")
+                .access("#oauth2.hasScope('internal.write')")
+            .antMatchers(HttpMethod.POST, "/api/conversations/*/members")
+                .access("#oauth2.hasScope('internal.write')")
+            .antMatchers(HttpMethod.GET, "/api/conversations/*/messages")
+                .access("#oauth2.hasScope('web-app')")
+            .antMatchers(HttpMethod.POST, "/api/conversations/*/messages")
+                .access("#oauth2.hasScope('web-app')")
+            .antMatchers(HttpMethod.GET, "/api/conversations")
+                .access("#oauth2.hasScope('internal.write') or #oauth2.hasScope('web-app')")
             .antMatchers("/api/**").authenticated()
             .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/configuration/ui").permitAll();

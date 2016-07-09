@@ -38,7 +38,7 @@ public class Conversation implements Serializable {
     @JsonIgnore
     private Set<Message> messages = new HashSet<>();
 
-    @ManyToMany(mappedBy = "conversations", cascade = CascadeType.DETACH)
+    @ManyToMany(mappedBy = "conversations", cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
     @JsonIgnore
     private Set<UserHolder> users = new HashSet<>();
 
