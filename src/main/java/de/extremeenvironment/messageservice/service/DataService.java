@@ -50,12 +50,11 @@ public class DataService {
         Message message= new Message();
         message.setMessageText("looll");
         message.setUser(userHolder);
-
-        messageRepository.saveAndFlush(message);
-
-        conversation.addMessage(message);
+        message.setConversation(conversation);
 
         conversationRepository.saveAndFlush(conversation);
+        messageRepository.saveAndFlush(message);
+
 
     }
 

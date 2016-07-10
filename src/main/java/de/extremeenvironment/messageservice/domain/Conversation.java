@@ -30,11 +30,11 @@ public class Conversation implements Serializable {
     private String title;
 
     @OneToMany(mappedBy = "conversation", orphanRemoval = true, fetch = FetchType.EAGER)
-
+    @JsonIgnore
     private Set<Message> messages = new HashSet<>();
 
     @ManyToMany(mappedBy = "conversations")
-
+    @JsonIgnore
     private Set<UserHolder> users = new HashSet<>();
 
     public Long getId() {
@@ -78,7 +78,6 @@ public class Conversation implements Serializable {
     }
 
     public void addMessage(Message message) {
-        message.setConversation(this);
         messages.add(message);
     }
 
