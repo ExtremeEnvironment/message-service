@@ -100,18 +100,11 @@ public class MessageResource {
         //conversation.addMessage(message);
         conversationRepository.save(conversation);
         message.setConversation(conversation);
-        try {
+        Message result = messageRepository.save(message);
+        return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))
+            .body(result);
 
-            Message result = messageRepository.save(message);
-            return ResponseEntity.created(new URI("/api/messages/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert("message", result.getId().toString()))
-                .body(result);
-        } catch (Exception e) {
-            log.error("it failed with: {} {}", e.getClass().toString(), e.getMessage());
-            log.error("{}", e);
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
-        }
 
     }
 

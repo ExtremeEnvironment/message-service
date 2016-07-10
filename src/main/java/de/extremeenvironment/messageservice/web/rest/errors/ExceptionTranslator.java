@@ -1,6 +1,8 @@
 package de.extremeenvironment.messageservice.web.rest.errors;
 
+import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.dao.ConcurrencyFailureException;
@@ -14,11 +16,26 @@ import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.ConstraintViolationException;
+
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures.
  */
 @ControllerAdvice
 public class ExceptionTranslator {
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    public ErrorDTO constraintViolation(ConstraintViolationException e) {
+        return new ErrorDTO(
+            "constraint violation exception",
+            e.getMessage(),
+            e.getConstraintViolations().stream()
+                .map(constraintViolation -> new FieldErrorDTO("","",constraintViolation.getMessage()))
+                .collect(Collectors.toList())
+        );
+    }
 
     @ExceptionHandler(ConcurrencyFailureException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
