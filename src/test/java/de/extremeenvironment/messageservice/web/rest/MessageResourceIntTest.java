@@ -134,7 +134,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
-    @WithMockOAuth2Authentication
+    @WithMockOAuth2Authentication(scope = "web-app")
     public void createMessage() throws Exception {
         int databaseSizeBeforeCreate = messageRepository.findAll().size();
 
@@ -160,7 +160,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
-    @WithMockOAuth2Authentication
+    @WithMockOAuth2Authentication(scope = "web-app")
     public void checkMessageTextIsRequired() throws Exception {
         int databaseSizeBeforeTest = messageRepository.findAll().size();
         // set the field null
@@ -179,7 +179,7 @@ public class MessageResourceIntTest{
 
     @Test
     @Transactional
-    @WithMockOAuth2Authentication
+    @WithMockOAuth2Authentication(scope = "web-app")
     public void getAllMessages() throws Exception {
         // Initialize the database
         conversation.addMessage(message);
@@ -187,9 +187,7 @@ public class MessageResourceIntTest{
         messageRepository.saveAndFlush(message);
 
         // Get all the messages
-        restMessageMockMvc.perform(get("/api/conversations/{conversationId}/messages?sort=id,desc", conversation.getId())
-                    .with(user("tester").roles("USER", "ADMIN"))
-                )
+        restMessageMockMvc.perform(get("/api/conversations/{conversationId}/messages?sort=id,desc", conversation.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(message.getId().intValue())))
