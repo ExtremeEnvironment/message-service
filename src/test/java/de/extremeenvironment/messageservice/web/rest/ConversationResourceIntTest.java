@@ -31,6 +31,7 @@ import javax.inject.Inject;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -49,6 +50,10 @@ public class ConversationResourceIntTest {
 
     private static final Boolean DEFAULT_ACTIVE = false;
     private static final Boolean UPDATED_ACTIVE = true;
+    private static final String DEFAULT_TYPE = "default";
+    private static final String UPDATED_TYPE = "custom";
+    private static final Long DEFAULT_ACTION_ID = 1L;
+    private static final Long UPDATED_ACTION_ID = 2L;
     private static final String DEFAULT_TITLE = "AAAAA";
     private static final String UPDATED_TITLE = "BBBBB";
 
@@ -98,6 +103,8 @@ public class ConversationResourceIntTest {
         conversation = new Conversation();
         conversation.setActive(DEFAULT_ACTIVE);
         conversation.setTitle(DEFAULT_TITLE);
+        conversation.setType(DEFAULT_TYPE);
+        conversation.setMatchedActionId(DEFAULT_ACTION_ID);
         conversation.addMessage(new Message("Hi", user));
         conversation.addMessage(new Message("Goodbye", user));
         conversation.addMember(user);
@@ -130,7 +137,7 @@ public class ConversationResourceIntTest {
     public void getAllConversations() throws Exception {
         // Initialize the database
         conversationRepository.saveAndFlush(conversation);
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
+        conversation.getMessages().forEach(message -> messageRepository.save(message));
 
         // Get all the conversations
         restConversationMockMvc.perform(get("/api/conversations?sort=id,desc"))
@@ -138,6 +145,8 @@ public class ConversationResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(conversation.getId().intValue())))
                 .andExpect(jsonPath("$.[*].active").value(hasItem(DEFAULT_ACTIVE.booleanValue())))
+                .andExpect(jsonPath("$.[*].type").value(hasItem(DEFAULT_TYPE)))
+                .andExpect(jsonPath("$.[*].matchedActionId").value(hasItem(DEFAULT_ACTION_ID.intValue())))
                 .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())));
     }
 
@@ -146,7 +155,7 @@ public class ConversationResourceIntTest {
     public void getConversation() throws Exception {
         // Initialize the database
         conversation = conversationRepository.saveAndFlush(conversation);
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
+        conversation.getMessages().forEach(message -> messageRepository.save(message));
 
         // Get the conversation
         restConversationMockMvc.perform(get("/api/conversations/{id}", conversation.getId()))
@@ -154,6 +163,8 @@ public class ConversationResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(conversation.getId().intValue()))
             .andExpect(jsonPath("$.active").value(DEFAULT_ACTIVE.booleanValue()))
+            .andExpect(jsonPath("$.type").value(DEFAULT_TYPE))
+            .andExpect(jsonPath("$.matchedActionId").value(DEFAULT_ACTION_ID.intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()));
     }
 
@@ -170,7 +181,7 @@ public class ConversationResourceIntTest {
     public void updateConversation() throws Exception {
         // Initialize the database
         conversationRepository.saveAndFlush(conversation);
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
+        conversation.getMessages().forEach(message -> messageRepository.save(message));
         int databaseSizeBeforeUpdate = conversationRepository.findAll().size();
 
         // Update the conversation
@@ -178,6 +189,8 @@ public class ConversationResourceIntTest {
         updatedConversation.setId(conversation.getId());
         updatedConversation.setActive(UPDATED_ACTIVE);
         updatedConversation.setTitle(UPDATED_TITLE);
+        updatedConversation.setType(UPDATED_TYPE);
+        updatedConversation.setMatchedActionId(UPDATED_ACTION_ID);
 
         restConversationMockMvc.perform(put("/api/conversations")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -197,7 +210,7 @@ public class ConversationResourceIntTest {
     public void deleteConversation() throws Exception {
         // Initialize the database
         conversationRepository.saveAndFlush(conversation);
-        conversation.getMessages().stream().forEach(message -> messageRepository.save(message));
+        conversation.getMessages().forEach(message -> messageRepository.save(message));
         int databaseSizeBeforeDelete = conversationRepository.findAll().size();
 
         // Get the conversation

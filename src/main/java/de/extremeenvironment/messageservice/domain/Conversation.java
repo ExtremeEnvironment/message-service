@@ -14,9 +14,9 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "conversation")
-public class Conversation implements Serializable {
+public class Conversation extends AbstractAuditingEntity implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 46757L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -28,6 +28,12 @@ public class Conversation implements Serializable {
 
     @Column(name = "title")
     private String title;
+
+    @Column
+    private String type = "default";
+
+    @Column
+    private Long matchedActionId;
 
     @OneToMany(
         mappedBy = "conversation",
@@ -90,6 +96,22 @@ public class Conversation implements Serializable {
     public void addMember(UserHolder userHolder) {
         userHolder.getConversations().add(this);
         users.add(userHolder);
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Long getMatchedActionId() {
+        return matchedActionId;
+    }
+
+    public void setMatchedActionId(Long matchedActionId) {
+        this.matchedActionId = matchedActionId;
     }
 
     @Override

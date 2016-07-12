@@ -17,6 +17,8 @@ public class ConversationDto {
     private Long id;
     private boolean active = true;
     private String title;
+    private String type;
+    private Long matchedActionId;
     private Set<UserHolder> users = new HashSet<>();
 
     public ConversationDto() {
@@ -64,6 +66,22 @@ public class ConversationDto {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public Long getMatchedActionId() {
+        return matchedActionId;
+    }
+
+    public void setMatchedActionId(Long matchedActionId) {
+        this.matchedActionId = matchedActionId;
     }
 
     public Set<UserHolder> getUsers() {
