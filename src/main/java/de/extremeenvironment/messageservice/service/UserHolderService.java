@@ -22,11 +22,11 @@ public class UserHolderService {
         this.userHolderRepository = userHolderRepository;
     }
 
-    public UserHolder findOrCreateByAccount(Account source) {
+    public synchronized UserHolder findOrCreateByAccount(Account source) {
         Optional<UserHolder> user = userHolderRepository.findOneByUserId(source.getId());
         return user.isPresent()
             ? user.get()
-            : userHolderRepository.save(new UserHolder(source.getId(), source.getLogin()));
+            : userHolderRepository.saveAndFlush(new UserHolder(source.getId(), source.getLogin()));
 /*
         UserHolder userHolder = userHolderRepository
             .findOneByUserId(source.getId())
