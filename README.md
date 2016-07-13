@@ -6,6 +6,15 @@ This application was generated using JHipster, you can find documentation and he
 
 Before you can build this project, you must install and configure the following dependencies on your machine:
 
+	Install Java 8
+	Install Git
+	Install Node.js
+		Install Yeoman: npm install -g yo
+		Install Bower: npm install -g bower
+		Install Gulp: npm install -g gulp
+		Install JHipster: npm install -g generator-jhipster
+	
+
 
 ## Building for production
 
