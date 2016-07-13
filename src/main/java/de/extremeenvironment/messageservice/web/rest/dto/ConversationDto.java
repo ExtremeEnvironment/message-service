@@ -40,6 +40,8 @@ public class ConversationDto {
         conversation.setActive(active);
         conversation.setTitle(title);
         conversation.setUsers(users);
+        conversation.setType(type);
+        conversation.setMatchedActionId(matchedActionId);
 
         return conversation;
     }
